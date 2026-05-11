@@ -25,17 +25,17 @@ from engine_utils.general_slicer import SliceContext, slice_data
 
 class SileroVADConfigModel(HandlerBaseConfigModel, BaseModel):
     speaking_threshold: float = Field(default=0.5)
-    start_delay: int = Field(default=2048)
-    end_delay: int = Field(default=5000)
+    start_delay: int = Field(default=1024)
+    end_delay: int = Field(default=6000)
     early_end_delay: int = Field(default=1500, description="早期结束检测阈值（样本数），用于触发首次 early_vad_end 事件")
     early_end_repeat_delay: int = Field(default=3200, description="持续静音时重复发送 early_vad_end 的间隔（样本数），0 表示不重复")
-    buffer_look_back: int = Field(default=1024)
+    buffer_look_back: int = Field(default=2048)
     prestart_fallback_threshold: int = Field(default=512)
     speech_padding: int = Field(default=512)
     volume_threshold: float = Field(default=-40)
     # 重连机制配置
     post_end_monitor_samples: int = Field(default=16000, description="判停后监控期长度（样本数），16000 = 1秒")
-    reconnect_threshold_samples: int = Field(default=8000, description="重连阈值（样本数），小于此值认为是误判")
+    reconnect_threshold_samples: int = Field(default=4000, description="重连阈值（样本数），小于此值认为是误判")
     # POST_END 能量检测阈值（dB），作为 VAD 模型的备份检测
     # 当音频能量超过此阈值时，即使 VAD 模型没检测到语音，也认为有语音活动
     post_end_energy_threshold: float = Field(default=-35, description="POST_END 期间能量检测阈值（dB），高于此值认为有语音")

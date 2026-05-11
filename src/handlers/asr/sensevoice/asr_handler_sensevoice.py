@@ -19,6 +19,7 @@ from funasr import AutoModel
 
 from engine_utils.directory_info import DirectoryInfo
 from engine_utils.general_slicer import SliceContext, slice_data
+from handlers.asr.sensevoice.noise_suppression import reduce_noise
 
 
 class ASRConfig(HandlerBaseConfigModel, BaseModel):
@@ -133,6 +134,7 @@ class HandlerASR(HandlerBase, ABC):
                      np.zeros(shape=(context.audio_slice_context.slice_size - remainder_audio.shape[0]))])
                 context.output_audios.append(remainder_audio)
         output_audio = np.concatenate(context.output_audios)
+        output_audio = reduce_noise(output_audio, sample_rate=16000)
         if context.audio_dump_file is not None:
             logger.info('dump audio')
             context.audio_dump_file.write(output_audio.tobytes())
