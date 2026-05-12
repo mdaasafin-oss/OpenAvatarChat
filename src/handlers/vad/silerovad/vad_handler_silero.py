@@ -431,7 +431,7 @@ class HandlerAudioVAD(HandlerBase, ABC):
         output_definition = output_definitions.get(ChatDataType.HUMAN_AUDIO).definition
         
         # POST_END 状态下需要继续处理音频进行监控，不受播放状态限制
-        if not context.input_enabled and context.speaking_status not in (SpeakingStatus.POST_END, SpeakingStatus.PRE_START, SpeakingStatus.START):
+        if not context.input_enabled and context.speaking_status == SpeakingStatus.END and context.speech_length == 0:
             return
         if inputs.type != ChatDataType.MIC_AUDIO:
             return
