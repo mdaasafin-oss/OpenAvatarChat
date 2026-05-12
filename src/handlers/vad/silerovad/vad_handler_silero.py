@@ -431,7 +431,24 @@ class HandlerAudioVAD(HandlerBase, ABC):
         output_definition = output_definitions.get(ChatDataType.HUMAN_AUDIO).definition
         
         # POST_END 状态下需要继续处理音频进行监控，不受播放状态限制
-        if not context.input_enabled and context.speaking_status == SpeakingStatus.END and context.speech_length == 0:
+        # Barge-in fix: Keep VAD running during chatbot playback.
+        # Industry standard: VAD must run continuously, only block submit.
+        # When user speech detected during playback, immediately re-enable input.
+        if not context.input_enabled and context.speaking_status == SpeakingStatus.END:
+            audio = inputs.data.get_main_data()
+            if audio is not None:
+                audio_check = audio.squeeze()
+                if audio_check.dtype != np.float32:
+                    audio_check = audio_check.astype(np.float32) / 32767
+                clip = audio_check[:512] if len(audio_check) >= 512 else audio_check
+                if len(clip) > 0:
+                    speech_prob = self._inference(context, clip)
+                    rms = AudioUtils.get_rms(clip, self.weight_curve)
+                    db = AudioUtils.rms_to_db(rms)
+                    if speech_prob > context.config.speaking_threshold and db > context.config.volume_threshold:
+                        logger.info(f"Barge-in detected! speech_prob={speech_prob:.2f}, db={db:.1f}dB. Re-enabling input.")
+                        context.input_enabled = True
+                        context.speech_length = 0
             return
         if inputs.type != ChatDataType.MIC_AUDIO:
             return
