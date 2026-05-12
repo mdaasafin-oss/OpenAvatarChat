@@ -19,7 +19,7 @@ from funasr import AutoModel
 
 from engine_utils.directory_info import DirectoryInfo
 from engine_utils.general_slicer import SliceContext, slice_data
-from handlers.asr.sensevoice.noise_suppression import reduce_noise
+from .noise_suppression import reduce_noise
 
 
 class ASRConfig(HandlerBaseConfigModel, BaseModel):
