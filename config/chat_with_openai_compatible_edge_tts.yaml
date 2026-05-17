@@ -21,11 +21,11 @@ default:
         module: logic/interrupt/interrupt_handler
       SileroVad:
         module: vad/silerovad/vad_handler_silero
-        speaking_threshold: 0.5
-        start_delay: 2048
-        end_delay: 5000
-        buffer_look_back: 5000
-        speech_padding: 512
+        speaking_threshold: 0.35
+        start_delay: 384
+        end_delay: 6000
+        buffer_look_back: 5120
+        speech_padding: 2048
       SenseVoice:
         enabled: True
         module: asr/sensevoice/asr_handler_sensevoice
@@ -37,19 +37,19 @@ default:
       LLMOpenAICompatible:
         enabled: True
         module: llm/openai_compatible/llm_handler_openai_compatible
-        model_name: "qwen-plus"
+        model_name: "llama-3.3-70b-versatile"
         enable_video_input: False # ensure your llm support video input
         history_length: 20
         # model_name: "gemini-2.0-flash"
-        system_prompt: "请你扮演一个 AI 助手，用简短的两三句对话来回答用户的问题，并在对话内容中加入合适的标点符号，不需要讨论标点符号相关的内容"
-        api_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        system_prompt: "You are a helpful AI assistant. Give smart, concise answers. 1-2 sentences max."
+        api_url: "https://api.groq.com/openai/v1"
         # api_url: 'http://127.0.0.1:11434/v1' # ollama
         # api_url: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-        # api_key: "" # default=os.getenv("DASHSCOPE_API_KEY")
+        api_key: ""
       LiteAvatar:
         module: avatar/liteavatar/avatar_handler_liteavatar
         avatar_name: 20250408/sample_data
-        fps: 25
+        fps: 15
         debug: false
         enable_fast_mode: false
-        use_gpu: true
+        use_gpu: false

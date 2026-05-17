@@ -139,7 +139,7 @@ class HandlerASR(HandlerBase, ABC):
             logger.info('dump audio')
             context.audio_dump_file.write(output_audio.tobytes())
 
-        res = self.model.generate(input=output_audio, batch_size_s=10)
+        res = self.model.generate(input=output_audio, batch_size_s=10, language="en", use_itn=True)
         logger.info(res)
         context.output_audios.clear()
         output_text = re.sub(r"<\|.*?\|>", "", res[0]['text'])

@@ -459,7 +459,7 @@ class StreamStorage:
         self._cleanup_recycle()
         target_stream = self.find_stream(refer_to)
         if target_stream is None:
-            logger.error(f"Stream {refer_to} not found")
+            logger.debug(f"Stream {refer_to} already recycled, skipping unref")
             return False
         
         referrer_key = refer_by.key
@@ -479,7 +479,7 @@ class StreamStorage:
         self._cleanup_recycle()
         target_stream = self.find_stream(refer_to)
         if target_stream is None:
-            logger.error(f"Stream {refer_to} not found")
+            logger.debug(f"Stream {refer_to} already recycled, skipping unref")
         else:
             target_stream.ref_by.pop(refer_by.key, None)
             stream_debug.log_ref_remove(refer_by, refer_to, len(target_stream.ref_by))

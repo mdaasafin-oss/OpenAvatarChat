@@ -34,11 +34,11 @@ class SileroVADConfigModel(HandlerBaseConfigModel, BaseModel):
     speech_padding: int = Field(default=512)
     volume_threshold: float = Field(default=-40)
     # 重连机制配置
-    post_end_monitor_samples: int = Field(default=16000, description="判停后监控期长度（样本数），16000 = 1秒")
+    post_end_monitor_samples: int = Field(default=8000, description="判停后监控期长度（样本数），16000 = 1秒")
     reconnect_threshold_samples: int = Field(default=4000, description="重连阈值（样本数），小于此值认为是误判")
     # POST_END 能量检测阈值（dB），作为 VAD 模型的备份检测
     # 当音频能量超过此阈值时，即使 VAD 模型没检测到语音，也认为有语音活动
-    post_end_energy_threshold: float = Field(default=-35, description="POST_END 期间能量检测阈值（dB），高于此值认为有语音")
+    post_end_energy_threshold: float = Field(default=-20, description="POST_END 期间能量检测阈值（dB），高于此值认为有语音")
 
 
 class SpeakingStatus(enum.Enum):
@@ -67,6 +67,7 @@ class HumanAudioVADContext(HandlerContext):
         # Input enabled state (controlled by CLIENT_PLAYBACK STREAM_BEGIN/END signals)
         # In simplex mode: disabled on playback STREAM_BEGIN, re-enabled on playback STREAM_END
         self.input_enabled: bool = True
+        self.noise_floor_db: float = -60.0  # adaptive noise floor
 
         self.model_state: Optional[np.ndarray] = None
         self.slice_context: Optional[SliceContext] = None
@@ -366,7 +367,7 @@ class HandlerAudioVAD(HandlerBase, ABC):
             slice_axis=0,
         )
         context.history_length_limit = math.ceil((context.config.start_delay + context.config.buffer_look_back)
-                                                 / context.clip_size)
+                                                 / context.clip_size) + 40  # extra 40 chunks (~1280ms) pre-buffer
         context.agc = create_mel_agc(
             target_level_db=-5.0,
             max_gain_db=30.0,
@@ -388,6 +389,19 @@ class HandlerAudioVAD(HandlerBase, ABC):
         context = cast(HumanAudioVADContext, handler_context)
         if context.agc is not None:
             context.agc.warmup()
+        # Pre-warm VAD model with silent chunks to prevent cold-start clipping
+        import numpy as np
+        dummy_audio = np.zeros(512, dtype=np.float32)
+        dummy_state = np.zeros((2, 1, 128), dtype=np.float32)
+        for _ in range(20):
+            inputs = {
+                "input": np.expand_dims(dummy_audio, axis=0),
+                "sr": np.array([16000], dtype=np.int64),
+                "state": dummy_state
+            }
+            _, dummy_state = self.model.run(None, inputs)
+        context.model_state = dummy_state
+        logger.info("VAD model pre-warmed with 20 silent chunks")
 
     def get_handler_detail(self, session_context: SessionContext,
                            context: HandlerContext) -> HandlerDetail:
@@ -449,6 +463,11 @@ class HandlerAudioVAD(HandlerBase, ABC):
                         logger.info(f"Barge-in detected! speech_prob={speech_prob:.2f}, db={db:.1f}dB. Re-enabling input.")
                         context.input_enabled = True
                         context.speech_length = 0
+                        context.emit_signal(ChatSignal(
+                            type=ChatSignalType.INTERRUPT,
+                            source_type=ChatSignalSourceType.HANDLER,
+                            source_name="vad_barge_in",
+                        ))
             return
         if inputs.type != ChatDataType.MIC_AUDIO:
             return
@@ -522,7 +541,7 @@ class HandlerAudioVAD(HandlerBase, ABC):
                 context.input_enabled = False
             if back_to_end or (human_speech_end and not entering_post_end):
                 context.reset()
-                context.reset_model()
+#               context.reset_model()  # disabled to prevent cold start
             if audio_clip is not None:
                 if context.agc is not None:
                     audio_clip = context.agc.apply_gain(audio_clip)

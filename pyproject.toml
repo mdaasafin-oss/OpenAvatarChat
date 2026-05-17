@@ -39,7 +39,7 @@ dependencies = [
     "pillow>=11.1.0",
     "pyjwt==2.10.1",
     "opuslib>=3.0.1",  # Opus 音频编解码支持
-    "onnxruntime-gpu~=1.20.2",
+    "onnxruntime~=1.20.1",
     "protobuf>=4.25.3,<5",  # TensorFlow 2.16.x 兼容范围，避免 MessageFactory.GetPrototype 报错
     "huggingface-hub>=0.23.2,<1.0",
 ]
@@ -61,18 +61,18 @@ members = [
 #fastrtc = { path = "src/third_party/gradio_webrtc_videochat/dist/fastrtc-0.0.28.dev0-py3-none-any.whl" }
 
 torch = [
-    { index = "pytorch-cu128" },
+    { index = "pytorch-cpu" },
 ]
 torchvision = [
-    { index = "pytorch-cu128" },
+    { index = "pytorch-cpu" },
 ]
 torchaudio = [
-    { index = "pytorch-cu128" },
+    { index = "pytorch-cpu" },
 ]
 
 [[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
 #[tool.uv]

@@ -36,7 +36,7 @@ VERSION_OVERRIDES = {
 # Package name replacements: when handler pyproject.toml declares a CPU-only
 # package but the project should use the GPU variant instead.
 PACKAGE_REPLACEMENTS = {
-    "onnxruntime": "onnxruntime-gpu",
+    "onnxruntime": "onnxruntime",
 }
 
 # Packages managed by the root pyproject.toml that must NEVER be overridden
